@@ -13,18 +13,18 @@ struct ImmersiveView: View {
 
     var body: some View {
         RealityView { content in
-            // Add the initial RealityKit content
-            if let immersiveContentEntity = try? await Entity(named: "Immersive", in: realityKitContentBundle) {
-                content.add(immersiveContentEntity)
-
-                // Put skybox here.  See example in World project available at
-                // https://developer.apple.com/
+            async let creamSodaCookie = ModelEntity(named: "Cream_Soda_Cookie_Epic_Skin")
+            
+            if let creamSodaCookie = try? await creamSodaCookie {
+                content.add(creamSodaCookie)
+                
+                creamSodaCookie.position = [0, 0, -6]
             }
         }
     }
 }
 
-#Preview(immersionStyle: .full) {
+#Preview(immersionStyle: .mixed) {
     ImmersiveView()
         .environment(AppModel())
 }
