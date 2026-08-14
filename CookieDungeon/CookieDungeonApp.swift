@@ -13,10 +13,10 @@ struct CookieDungeonApp: App {
     @State private var appModel = AppModel()
 
     var body: some Scene {
-        WindowGroup {
-            ContentView()
-                .environment(appModel)
-        }
+//        WindowGroup {
+//            ContentView()
+//                .environment(appModel)
+//        }
 
         ImmersiveSpace(id: appModel.immersiveSpaceID) {
             ImmersiveView()
@@ -28,6 +28,6 @@ struct CookieDungeonApp: App {
                     appModel.immersiveSpaceState = .closed
                 }
         }
-        .immersionStyle(selection: .constant(.full), in: .full)
+        .immersionStyle(selection: .constant(.mixed), in: .mixed)
     }
 }
