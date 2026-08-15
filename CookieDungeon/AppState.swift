@@ -16,7 +16,19 @@ class AppState {
     private let worldTracking = WorldTrackingProvider()
     private let roomTracking = RoomTrackingProvider()
     
-    private var worldSensingAuthorizationStatus: ARKitSession.AuthorizationStatus = .notDetermined
+    private(set) var worldSensingAuthorizationStatus: ARKitSession.AuthorizationStatus = .notDetermined
+    
+    // 모든 가상 콘텐츠의 루트
+    private let contentRoot = Entity()
+    // 방 범위 지오메트리의 루트
+    private let roomRoot = Entity()
+    
+    private var roomAnchors = [UUID: RoomAnchor]()
+    private var worldAnchors = [UUID: WorldAnchor]()
+    private var cookieEntities = [UUID: ModelEntity]()
+    private var roomEntities = [UUID: ModelEntity]()
+    
+    private var currentRoomID: UUID?
     
     func requestWorldSensingAuthorization() async {
         let authorizationResult = await session.requestAuthorization(for: [.worldSensing])
@@ -31,7 +43,11 @@ class AppState {
     }
     
     func runARKitSession() async {
-        guard worldSensingAuthorizationStatus == .allowed else { return }
+        guard worldSensingAuthorizationStatus == .allowed else {
+            print("worldSending 권한 없음")
+            
+            return
+        }
         
         do {
             try await session.run([worldTracking, roomTracking])
