@@ -28,6 +28,8 @@ class AppState {
     private var cookieEntities = [UUID: ModelEntity]()
     private var roomEntities = [UUID: ModelEntity]()
     
+    private let occlusionMaterial = OcclusionMaterial()
+    
     private var currentRoomID: UUID?
     
     func requestWorldSensingAuthorization() async {
@@ -51,8 +53,31 @@ class AppState {
         
         do {
             try await session.run([worldTracking, roomTracking])
+            
+            Task {
+                await processRoomTrackingUpdates()
+            }
+            
         } catch {
             print("ARKit 세션 실행 중 오류 발생: \(error)")
+        }
+    }
+    
+    // 해당 부분 추가 학습 필요: AnchorUpdate<RoomAnchor>.event & RoomTrackingProvider.anchorUpdates.anchor
+    func processRoomTrackingUpdates() async {
+        for await update in roomTracking.anchorUpdates {
+            let roomAnchor = update.anchor
+            
+            switch update.event {
+            case .added:
+                print("새로운 방 인식됨: \(roomAnchor.id)")
+                roomAnchors[roomAnchor.id] = roomAnchor
+            case .updated:
+                print("\(roomAnchor.id)방 업데이트됨")
+                roomAnchors[roomAnchor.id] = roomAnchor
+            case .removed:
+                roomAnchors.removeValue(forKey: roomAnchor.id)
+            }
         }
     }
 }
