@@ -15,7 +15,22 @@ struct PermissionRerequestView: View {
     
     var body: some View {
         HStack (spacing: 40) {
-            Model3D(named: "oven")
+            Model3D(named: "oven") { phase in
+                switch phase {
+                case .empty:
+                    VStack (spacing: 20) {
+                        Text("로딩 중")
+                            .font(.largeTitle)
+                        ProgressView()
+                    }
+                case .failure(let error):
+                    Text("오류 발생: \(error.localizedDescription)")
+                case .success(let model):
+                    model.resizable()
+                @unknown default:
+                    Text("알 수 없는 오류 발생")
+                }
+            }
             
             VStack (spacing: 20) {
                 Text("권한이 거부됨")
