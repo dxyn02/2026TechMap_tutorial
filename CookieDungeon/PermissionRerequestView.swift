@@ -18,7 +18,7 @@ struct PermissionRerequestView: View {
             Model3D(named: "oven") { phase in
                 switch phase {
                 case .empty:
-                    VStack (spacing: 20) {
+                    VStack (alignment: .center, spacing: 20) {
                         Text("로딩 중")
                             .font(.largeTitle)
                         ProgressView()
