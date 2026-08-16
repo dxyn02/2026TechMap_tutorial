@@ -69,14 +69,31 @@ class AppState {
             let roomAnchor = update.anchor
             
             switch update.event {
-            case .added:
-                print("새로운 방 인식됨: \(roomAnchor.id)")
-                roomAnchors[roomAnchor.id] = roomAnchor
-            case .updated:
-                print("\(roomAnchor.id)방 업데이트됨")
-                roomAnchors[roomAnchor.id] = roomAnchor
             case .removed:
                 roomAnchors.removeValue(forKey: roomAnchor.id)
+                roomEntities[roomAnchor.id]?.removeFromParent()
+                roomEntities.removeValue(forKey: roomAnchor.id)
+                
+            case .added, .updated:
+                roomAnchors[roomAnchor.id] = roomAnchor
+                guard let roomMeshResource = roomAnchor.geometry.asMeshResource() else { continue }
+                
+                if update.event == .added {
+                    let roomEntity = ModelEntity(mesh: roomMeshResource, materials: [occlusionMaterial])
+                    roomEntity.transform = Transform(matrix: roomAnchor.originFromAnchorTransform)
+                    roomEntities[roomAnchor.id] = roomEntity
+                    roomEntity.isEnabled = roomAnchor.isCurrentRoom
+                    roomRoot.addChild(roomEntity)
+                } else if update.event == .updated {
+                    guard let roomEntity = roomEntities[roomAnchor.id] else { continue }
+                    roomEntity.model?.mesh = roomMeshResource
+                    roomEntity.transform = Transform(matrix: roomAnchor.originFromAnchorTransform)
+                    roomEntity.isEnabled = roomAnchor.isCurrentRoom
+                }
+                
+                if roomAnchor.isCurrentRoom {
+                    currentRoomID = roomAnchor.id
+                }
             }
         }
     }
