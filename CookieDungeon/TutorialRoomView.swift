@@ -16,13 +16,7 @@ struct TutorialRoomView: View {
     
     var body: some View {
         RealityView { content in
-            async let creamSodaCookie = ModelEntity(named: "Cream_Soda_Cookie_Epic_Skin")
-            
-            if let creamSodaCookie = try? await creamSodaCookie {
-                content.add(creamSodaCookie)
-                
-                creamSodaCookie.position = [0, 0, -6]
-            }
+            content.add(appState.contentRoot)
         }
         .task {
             await appState.checkWorldSensingAuthorization()

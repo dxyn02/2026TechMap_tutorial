@@ -19,7 +19,7 @@ class AppState {
     private(set) var worldSensingAuthorizationStatus: ARKitSession.AuthorizationStatus = .notDetermined
     
     // 모든 가상 콘텐츠의 루트
-    private let contentRoot = Entity()
+    let contentRoot = Entity()
     // 방 범위 지오메트리의 루트
     private let roomRoot = Entity()
     
@@ -63,10 +63,11 @@ class AppState {
         }
     }
     
-    // 해당 부분 추가 학습 필요: AnchorUpdate<RoomAnchor>.event & RoomTrackingProvider.anchorUpdates.anchor
     func processRoomTrackingUpdates() async {
         for await update in roomTracking.anchorUpdates {
             let roomAnchor = update.anchor
+            
+            let centerPosition = roomAnchor.originFromAnchorTransform.columns.3.xyz
             
             switch update.event {
             case .removed:
@@ -74,10 +75,16 @@ class AppState {
                 roomEntities[roomAnchor.id]?.removeFromParent()
                 roomEntities.removeValue(forKey: roomAnchor.id)
                 
+                cookieEntities[roomAnchor.id]?.removeFromParent()
+                cookieEntities.removeValue(forKey: roomAnchor.id)
+                
             case .added, .updated:
                 roomAnchors[roomAnchor.id] = roomAnchor
-                guard let roomMeshResource = roomAnchor.geometry.asMeshResource() else { continue }
                 
+                await placeCookie(at: centerPosition, for: roomAnchor.id)
+                
+                guard let roomMeshResource = roomAnchor.geometry.asMeshResource() else { continue }
+                                
                 if update.event == .added {
                     let roomEntity = ModelEntity(mesh: roomMeshResource, materials: [occlusionMaterial])
                     roomEntity.transform = Transform(matrix: roomAnchor.originFromAnchorTransform)
@@ -95,6 +102,26 @@ class AppState {
                     currentRoomID = roomAnchor.id
                 }
             }
+        }
+    }
+    
+    private func placeCookie(at position: SIMD3<Float>, for roomID: UUID) async {
+        if let existingCookie = cookieEntities[roomID] {
+            existingCookie.position = position
+            
+            return
+        }
+        
+        do {
+            let cookie = try await ModelEntity(named: "Cream_Soda_Cookie_Epic_Skin")
+            cookie.position = position
+            
+            cookieEntities[roomID] = cookie
+            contentRoot.addChild(cookie)
+            
+            print("쿠키 배치 완료")
+        } catch {
+            print("쿠키 불러오기 실패: \(error)")
         }
     }
 }
