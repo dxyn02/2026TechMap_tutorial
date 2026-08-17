@@ -2,7 +2,9 @@ name: Deploy DocC to GitHub Pages
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -10,39 +12,63 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
-  cancel-in-progress: true
+  group: pages
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
     runs-on: macos-latest
 
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Build DocC Archive
+      - name: Configure GitHub Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Build DocC archive
         run: |
           xcodebuild docbuild \
             -project CookieDungeon.xcodeproj \
             -scheme CookieDungeon \
             -destination 'generic/platform=visionOS' \
-            -derivedDataPath .derivedData
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
 
-      - name: Transform for Static Hosting
+      - name: Find and transform DocC archive
         run: |
-          $(xcrun --find docc) process-archive \
-            transform-for-static-hosting .derivedData/Build/Products/Debug-xrsimulator/CookieDungeon.doccarchive \
-            --hosting-base-path <2026TechMap_tutorial> \
-            --output-path docs
+          ARCHIVE_PATH="$(
+            find "$RUNNER_TEMP/DerivedData/Build/Products" \
+              -type d \
+              -name 'CookieDungeon.doccarchive' \
+              -print \
+              -quit
+          )"
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+          if [ -z "$ARCHIVE_PATH" ]; then
+            echo "::error::CookieDungeon.doccarchive를 찾지 못했습니다."
+            find "$RUNNER_TEMP/DerivedData/Build/Products" -maxdepth 3 -print
+            exit 1
+          fi
+
+          echo "DocC archive: $ARCHIVE_PATH"
+
+          xcrun docc process-archive transform-for-static-hosting \
+            "$ARCHIVE_PATH" \
+            --hosting-base-path "${{ steps.pages.outputs.base_path }}" \
+            --output-path "$RUNNER_TEMP/docc-site"
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v4
         with:
-          path: 'docs'
+          path: ${{ runner.temp }}/docc-site
 
       - name: Deploy to GitHub Pages
         id: deployment
