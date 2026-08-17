@@ -1,9 +1,6 @@
 name: Deploy DocC to GitHub Pages
 
 on:
-  pull_request:
-    branches:
-      - main
   push:
     branches:
       - main
@@ -72,23 +69,58 @@ jobs:
             --hosting-base-path "${{ github.event.repository.name }}" \
             --output-path "$RUNNER_TEMP/docc-site"
 
+      - name: Create landing-page redirect
+        run: |
+          BASE_PATH="/${{ github.event.repository.name }}"
+          LANDING_URL="$BASE_PATH/tutorials/tableofcontents/"
+
+          cat > "$RUNNER_TEMP/docc-site/index.html" <<EOF
+          <!doctype html>
+          <html lang="ko">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <meta http-equiv="refresh" content="0; url=$LANDING_URL">
+            <link rel="canonical" href="$LANDING_URL">
+            <title>Cookie Dungeon 공간 컴퓨팅 튜토리얼</title>
+            <script>window.location.replace("$LANDING_URL");</script>
+          </head>
+          <body>
+            <p><a href="$LANDING_URL">튜토리얼로 이동하기</a></p>
+          </body>
+          </html>
+          EOF
+
       - name: Verify generated site
         run: |
-          INDEX_PATH="$RUNNER_TEMP/docc-site/index.html"
+          ROOT_INDEX="$RUNNER_TEMP/docc-site/index.html"
+          TUTORIAL_INDEX="$RUNNER_TEMP/docc-site/tutorials/tableofcontents/index.html"
           EXPECTED_BASE="/${{ github.event.repository.name }}/"
+          LANDING_URL="${EXPECTED_BASE}tutorials/tableofcontents/"
 
-          if [ ! -f "$INDEX_PATH" ]; then
+          if [ ! -f "$ROOT_INDEX" ]; then
             echo "::error::생성된 사이트에 index.html이 없습니다."
             exit 1
           fi
 
-          if ! grep -Fq "var baseUrl = \"$EXPECTED_BASE\"" "$INDEX_PATH"; then
-            echo "::error::DocC hosting base path가 index.html에 적용되지 않았습니다."
-            grep -o 'var baseUrl = [^<]*' "$INDEX_PATH" || true
+          if [ ! -f "$TUTORIAL_INDEX" ]; then
+            echo "::error::튜토리얼 목차 페이지가 생성되지 않았습니다."
+            exit 1
+          fi
+
+          if ! grep -Fq "var baseUrl = \"$EXPECTED_BASE\"" "$TUTORIAL_INDEX"; then
+            echo "::error::DocC hosting base path가 튜토리얼 페이지에 적용되지 않았습니다."
+            grep -o 'var baseUrl = [^<]*' "$TUTORIAL_INDEX" || true
+            exit 1
+          fi
+
+          if ! grep -Fq "$LANDING_URL" "$ROOT_INDEX"; then
+            echo "::error::루트 페이지의 튜토리얼 리디렉션이 올바르지 않습니다."
             exit 1
           fi
 
           echo "Verified DocC base path: $EXPECTED_BASE"
+          echo "Verified landing page: $LANDING_URL"
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v5
@@ -97,7 +129,6 @@ jobs:
 
   deploy:
     name: Deploy GitHub Pages
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -110,4 +141,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
-
