@@ -2,8 +2,8 @@
 
 > visionOS Room Tracking 사용 앱 및 튜토리얼 제작 프로젝트
 
-![visionOS](https://img.shields.io/badge/visionOS-26.0+-black?logo=apple)
-![Swift](https://img.shields.io/badge/Swift-6.0+-orange?logo=swift)
+![visionOS](https://img.shields.io/badge/visionOS-26.2+-black?logo=apple)
+![Swift](https://img.shields.io/badge/Swift-6.3+-orange?logo=swift)
 ![Xcode](https://img.shields.io/badge/Xcode-26.6+-blue?logo=xcode)
 
 ## 📖 소개
@@ -17,6 +17,5 @@
 
 ## 🛠️ 요구 사항
 - **Xcode 26.6** 이상
-- **visionOS 26.0** 이상
-- **Swift 6.0** 이상
-  
+- **visionOS 26.2** 이상
+- **Swift 6.3** 이상

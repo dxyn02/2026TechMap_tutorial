@@ -1,0 +1,46 @@
+name: Deploy DocC to GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build DocC Archive
+        run: |
+          xcodebuild docbuild \
+            -project CookieDungeon.xcodeproj \
+            -scheme CookieDungeon \
+            -destination 'generic/platform=visionOS' \
+            -derivedDataPath .derivedData
+
+      - name: Transform for Static Hosting
+        run: |
+          $(xcrun --find docc) process-archive \
+            transform-for-static-hosting .derivedData/Build/Products/Debug-xrsimulator/CookieDungeon.doccarchive \
+            --hosting-base-path <2026TechMap_tutorial> \
+            --output-path docs
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'docs'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
