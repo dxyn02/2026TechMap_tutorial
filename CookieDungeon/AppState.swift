@@ -28,6 +28,8 @@ class AppState {
     private var cookieEntities = [UUID: ModelEntity]()
     private var roomEntities = [UUID: ModelEntity]()
     
+    private var discoveredRoomIDs: [UUID] = []
+    
     private let occlusionMaterial = OcclusionMaterial()
     
     private var currentRoomID: UUID?
@@ -112,14 +114,21 @@ class AppState {
             return
         }
         
+        guard let roomIndex = discoveredRoomIDs.firstIndex(of: roomID) else { return }
+        
+        let availableCookies = CookieModel.allCases
+        let safeIndex = roomIndex % availableCookies.count
+        
+        let selectedCookie = availableCookies[safeIndex]
+        
         do {
-            let cookie = try await ModelEntity(named: "Cream_Soda_Cookie_Epic_Skin")
-            cookie.position = position
+            let cookieEntity = try await ModelEntity(named: selectedCookie.filename)
+            cookieEntity.position = position
             
-            cookieEntities[roomID] = cookie
-            contentRoot.addChild(cookie)
+            cookieEntities[roomID] = cookieEntity
+            contentRoot.addChild(cookieEntity)
             
-            print("쿠키 배치 완료")
+            print("\(roomIndex)번째 방에 \(selectedCookie.filename) 배치 완료")
         } catch {
             print("쿠키 불러오기 실패: \(error)")
         }
