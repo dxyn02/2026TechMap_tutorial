@@ -91,10 +91,125 @@ jobs:
           </html>
           EOF
 
+      - name: Add DocC web UI fixes
+        run: |
+          SITE_ROOT="$RUNNER_TEMP/docc-site"
+          BASE_PATH="/${{ github.event.repository.name }}"
+
+          cat > "$SITE_ROOT/scroll-fix.js" <<'EOF'
+          (() => {
+            const scrollToCurrentSection = () => {
+              const encodedID = window.location.hash.slice(1)
+              if (!encodedID) return
+
+              let sectionID = encodedID
+              try {
+                sectionID = decodeURIComponent(encodedID)
+              } catch {
+                // Keep the encoded value if the fragment isn't valid URI text.
+              }
+
+              const section = document.getElementById(sectionID)
+              if (!section) return
+
+              window.requestAnimationFrame(() => {
+                section.scrollIntoView({ behavior: "smooth", block: "start" })
+              })
+            }
+
+            const scheduleScroll = () => {
+              window.setTimeout(scrollToCurrentSection, 0)
+            }
+
+            window.addEventListener("load", scheduleScroll)
+            window.addEventListener("hashchange", scheduleScroll)
+            window.addEventListener("popstate", scheduleScroll)
+
+            // DocC's section menu updates the route through the History API.
+            for (const methodName of ["pushState", "replaceState"]) {
+              const originalMethod = window.history[methodName]
+              window.history[methodName] = function (...args) {
+                const result = originalMethod.apply(this, args)
+                scheduleScroll()
+                return result
+              }
+            }
+
+            // Also handle menu navigation that doesn't emit a history event.
+            document.addEventListener("click", scheduleScroll, true)
+          })()
+          EOF
+
+          cat > "$SITE_ROOT/theme-fix.css" <<'EOF'
+          /* DocC keeps tutorial overview pages dark even in Light mode. */
+          body[data-color-scheme="light"]:has(.tutorials-overview) {
+            --color-text-background: #fff;
+            background: #fff;
+          }
+
+          body[data-color-scheme="light"] .tutorials-overview,
+          body[data-color-scheme="light"] .tutorials-overview .hero {
+            --color-tutorials-overview-background: #fff;
+            --color-tutorials-overview-fill: #fff;
+            --color-tutorials-overview-fill-secondary: #f7f7f7;
+            --color-tutorials-overview-content: #000;
+            --color-tutorials-overview-content-alt: #333;
+            --color-tutorials-overview-header-text: #000;
+            --color-tutorials-overview-eyebrow: #666;
+            --color-tutorials-overview-icon: #666;
+            --color-tutorials-overview-navigation-link: #666;
+            --color-tutorials-overview-navigation-link-active: #000;
+            --color-tutorials-overview-navigation-link-hover: #000;
+            background: #fff;
+          }
+
+          @media (prefers-color-scheme: light) {
+            body[data-color-scheme="auto"]:has(.tutorials-overview) {
+              --color-text-background: #fff;
+              background: #fff;
+            }
+
+            body[data-color-scheme="auto"] .tutorials-overview,
+            body[data-color-scheme="auto"] .tutorials-overview .hero {
+              --color-tutorials-overview-background: #fff;
+              --color-tutorials-overview-fill: #fff;
+              --color-tutorials-overview-fill-secondary: #f7f7f7;
+              --color-tutorials-overview-content: #000;
+              --color-tutorials-overview-content-alt: #333;
+              --color-tutorials-overview-header-text: #000;
+              --color-tutorials-overview-eyebrow: #666;
+              --color-tutorials-overview-icon: #666;
+              --color-tutorials-overview-navigation-link: #666;
+              --color-tutorials-overview-navigation-link-active: #000;
+              --color-tutorials-overview-navigation-link-hover: #000;
+              background: #fff;
+            }
+          }
+          EOF
+
+          find "$SITE_ROOT" \
+            -type f \
+            -name 'index.html' \
+            ! -path "$SITE_ROOT/index.html" \
+            -exec sed -i '' \
+              "s|</head>|<link rel=\"stylesheet\" href=\"$BASE_PATH/theme-fix.css\"></head>|" \
+              {} +
+
+          find "$SITE_ROOT" \
+            -type f \
+            -name 'index.html' \
+            ! -path "$SITE_ROOT/index.html" \
+            -exec sed -i '' \
+              "s|</body>|<script defer src=\"$BASE_PATH/scroll-fix.js\"></script></body>|" \
+              {} +
+
       - name: Verify generated site
         run: |
           ROOT_INDEX="$RUNNER_TEMP/docc-site/index.html"
           TUTORIAL_INDEX="$RUNNER_TEMP/docc-site/tutorials/tableofcontents/index.html"
+          ROOM_TUTORIAL_INDEX="$RUNNER_TEMP/docc-site/tutorials/cookiedungeon/roomtracking/index.html"
+          SCROLL_FIX="$RUNNER_TEMP/docc-site/scroll-fix.js"
+          THEME_FIX="$RUNNER_TEMP/docc-site/theme-fix.css"
           EXPECTED_BASE="/${{ github.event.repository.name }}/"
           LANDING_URL="${EXPECTED_BASE}tutorials/tableofcontents/"
 
@@ -105,6 +220,21 @@ jobs:
 
           if [ ! -f "$TUTORIAL_INDEX" ]; then
             echo "::error::튜토리얼 목차 페이지가 생성되지 않았습니다."
+            exit 1
+          fi
+
+          if [ ! -f "$ROOM_TUTORIAL_INDEX" ]; then
+            echo "::error::Room Tracking 튜토리얼 페이지가 생성되지 않았습니다."
+            exit 1
+          fi
+
+          if [ ! -f "$SCROLL_FIX" ]; then
+            echo "::error::튜토리얼 섹션 스크롤 보정 파일이 없습니다."
+            exit 1
+          fi
+
+          if [ ! -f "$THEME_FIX" ]; then
+            echo "::error::DocC 테마 보정 파일이 없습니다."
             exit 1
           fi
 
@@ -119,8 +249,20 @@ jobs:
             exit 1
           fi
 
+          if ! grep -Fq "${EXPECTED_BASE}scroll-fix.js" "$ROOM_TUTORIAL_INDEX"; then
+            echo "::error::튜토리얼 페이지에 섹션 스크롤 보정이 적용되지 않았습니다."
+            exit 1
+          fi
+
+          if ! grep -Fq "${EXPECTED_BASE}theme-fix.css" "$TUTORIAL_INDEX"; then
+            echo "::error::튜토리얼 목차에 테마 보정이 적용되지 않았습니다."
+            exit 1
+          fi
+
           echo "Verified DocC base path: $EXPECTED_BASE"
           echo "Verified landing page: $LANDING_URL"
+          echo "Verified tutorial section scrolling fix"
+          echo "Verified tutorial overview color-scheme fix"
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v5
