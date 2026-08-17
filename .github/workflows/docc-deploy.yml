@@ -28,6 +28,9 @@ jobs:
             -scheme CookieDungeon \
             -destination 'generic/platform=visionOS' \
             -derivedDataPath .derivedData
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
 
       - name: Transform for Static Hosting
         run: |
