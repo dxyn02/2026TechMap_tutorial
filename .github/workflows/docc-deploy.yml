@@ -163,6 +163,42 @@ jobs:
             background: #fff;
           }
 
+          body[data-color-scheme="light"] .tutorials-overview .hero .title,
+          body[data-color-scheme="light"] .tutorials-overview .hero .content,
+          body[data-color-scheme="light"] .tutorials-overview .hero .meta {
+            color: #111 !important;
+          }
+
+          body[data-color-scheme="light"]:has(.tutorials-overview) .nav.theme-dark {
+            --color-nav-dark-color: #000;
+            --color-nav-dark-current-link: #000;
+            --color-nav-dark-link-color: #000;
+            --color-nav-dark-link-color-hover: #06c;
+            --color-nav-dark-root-subhead: #000;
+            --color-nav-dark-solid-background: #fff;
+            --color-nav-dark-stuck: rgba(255, 255, 255, 0.92);
+            --color-nav-dark-uiblur-expanded: rgba(255, 255, 255, 0.92);
+            --color-nav-dark-uiblur-stuck: rgba(255, 255, 255, 0.82);
+            --color-nav-dark-keyline: rgba(0, 0, 0, 0.2);
+            color: #000;
+            background: rgba(255, 255, 255, 0.92);
+          }
+
+          body[data-color-scheme="light"]:has(.tutorials-overview)
+            .nav.theme-dark .nav-title-content {
+            color: #000 !important;
+          }
+
+          body[data-color-scheme="light"]:has(.tutorials-overview)
+            .nav.theme-dark .tutorials-navigation-link {
+            color: #555 !important;
+          }
+
+          body[data-color-scheme="light"]:has(.tutorials-overview)
+            .nav.theme-dark .tutorials-navigation-link.active {
+            color: #000 !important;
+          }
+
           @media (prefers-color-scheme: light) {
             body[data-color-scheme="auto"]:has(.tutorials-overview) {
               --color-text-background: #fff;
@@ -183,6 +219,42 @@ jobs:
               --color-tutorials-overview-navigation-link-active: #000;
               --color-tutorials-overview-navigation-link-hover: #000;
               background: #fff;
+            }
+
+            body[data-color-scheme="auto"] .tutorials-overview .hero .title,
+            body[data-color-scheme="auto"] .tutorials-overview .hero .content,
+            body[data-color-scheme="auto"] .tutorials-overview .hero .meta {
+              color: #111 !important;
+            }
+
+            body[data-color-scheme="auto"]:has(.tutorials-overview) .nav.theme-dark {
+              --color-nav-dark-color: #000;
+              --color-nav-dark-current-link: #000;
+              --color-nav-dark-link-color: #000;
+              --color-nav-dark-link-color-hover: #06c;
+              --color-nav-dark-root-subhead: #000;
+              --color-nav-dark-solid-background: #fff;
+              --color-nav-dark-stuck: rgba(255, 255, 255, 0.92);
+              --color-nav-dark-uiblur-expanded: rgba(255, 255, 255, 0.92);
+              --color-nav-dark-uiblur-stuck: rgba(255, 255, 255, 0.82);
+              --color-nav-dark-keyline: rgba(0, 0, 0, 0.2);
+              color: #000;
+              background: rgba(255, 255, 255, 0.92);
+            }
+
+            body[data-color-scheme="auto"]:has(.tutorials-overview)
+              .nav.theme-dark .nav-title-content {
+              color: #000 !important;
+            }
+
+            body[data-color-scheme="auto"]:has(.tutorials-overview)
+              .nav.theme-dark .tutorials-navigation-link {
+              color: #555 !important;
+            }
+
+            body[data-color-scheme="auto"]:has(.tutorials-overview)
+              .nav.theme-dark .tutorials-navigation-link.active {
+              color: #000 !important;
             }
           }
           EOF
