@@ -1,0 +1,67 @@
+@Tutorial(time: 30) {
+    @Intro(title: "방 인식(Room Tracking)과 가상 객체 배치하기") {
+        visionOS의 `RoomTrackingProvider`를 활용하여 사용자가 위치한 방의 구조를 실시간으로 파악하는 방법을 배웁니다.
+
+        방의 형태를 인식하여 벽 너머의 가상 객체를 가려주는 오클루전(Occlusion)을 적용하고, 방마다 다른 3D 쿠키 모델을 정중앙에 배치해 봅니다.
+    }
+
+    @Section(title: "데이터 모델 및 익스텐션 준비하기") {
+        @ContentAndMedia {
+            본격적인 ARKit 세션을 실행하기 전, 3D 에셋을 안전하게 관리할 열거형과 복잡한 수학 연산을 도와줄 익스텐션 파일을 프로젝트에 추가합니다.
+        }
+
+        @Steps {
+            @Step {
+                먼저, 화면에 띄울 쿠키 모델들의 파일명을 관리하는 열거형을 생성합니다. `CaseIterable`을 채택하여 배열처럼 순회할 수 있게 만듭니다.
+
+                @Code(name: "CookieModel.swift", file: CookieModel.swift)
+            }
+
+            @Step {
+                ARKit의 수학적 뼈대 데이터(Geometry)를 RealityKit의 메시(MeshResource)로 변환하기 위한 익스텐션을 추가합니다.
+
+                @Code(name: "Extensions.swift", file: Extensions.swift)
+            }
+        }
+    }
+
+    @Section(title: "AppState 구현: 방 추적과 오클루전 적용") {
+        @ContentAndMedia {
+            이제 ARKit 세션을 실행하고 연속으로 전달되는 방 데이터를 처리하는 비동기 루프를 구현합니다. 투명한 방 껍데기를 세워 다른 방의 객체를 가리고 쿠키를 정중앙에 배치합니다.
+        }
+
+        @Steps {
+            @Step {
+                `AppState` 클래스를 생성하고 ARKit 세션과 Provider, 추적된 데이터를 저장할 딕셔너리를 선언합니다.
+
+                @Code(name: "AppState.swift", file: AppState-Properties.swift)
+            }
+
+            @Step {
+                방의 정중앙 좌표에 순번에 맞는 쿠키를 배치하는 `placeCookie` 함수를 추가합니다. 열거형에서 알맞은 쿠키 이름을 가져와 비동기로 모델을 불러옵니다.
+
+                @Code(name: "AppState.swift", file: AppState-PlaceCookie.swift)
+            }
+
+            @Step {
+                실시간으로 방 데이터의 변화를 수신하는 `processRoomTrackingUpdates` 루프를 구현합니다. 여기에서 오클루전 껍데기를 만들고 쿠키 배치 함수를 호출합니다.
+
+                @Code(name: "AppState.swift", file: AppState-RoomUpdates.swift)
+            }
+        }
+    }
+
+    @Section(title: "View에 연결하기") {
+        @ContentAndMedia {
+            마지막으로 `RealityView`를 구성하여 `AppState`가 관리하는 가상 콘텐츠 루트를 화면에 렌더링합니다.
+        }
+
+        @Steps {
+            @Step {
+                `TutorialRoomView`에서 `AppState`를 환경 값으로 주입받고, `RealityView` 안에 `contentRoot`를 추가합니다.
+
+                @Code(name: "TutorialRoomView.swift", file: TutorialRoomView.swift)
+            }
+        }
+    }
+}

@@ -1,0 +1,14 @@
+@Tutorials(name: "Cookie Dungeon 개발 가이드") {
+    @Intro(title: "Cookie Dungeon 공간 컴퓨팅 튜토리얼") {
+        이 튜토리얼은 visionOS에서 방을 인식하고 객체를 배치하는 과정을 안내합니다.
+        
+    }
+    
+    @Chapter(name: "방 인식과 렌더링") {
+        RoomTrackingProvider를 사용하여 방의 구조를 파악해 봅니다.
+        
+        @Image(source: "PreparationStep.png", alt: "챕터 이미지")
+        
+        @TutorialReference(tutorial: "doc:RoomTracking") 
+    }
+}
