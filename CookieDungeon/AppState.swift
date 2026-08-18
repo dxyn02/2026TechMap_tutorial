@@ -21,7 +21,7 @@ class AppState {
     // 모든 가상 콘텐츠의 루트
     let contentRoot = Entity()
     // 방 범위 지오메트리의 루트
-    private let roomRoot = Entity()
+    let roomRoot = Entity()
     
     private var roomAnchors = [UUID: RoomAnchor]()
     private var worldAnchors = [UUID: WorldAnchor]()
@@ -69,8 +69,6 @@ class AppState {
         for await update in roomTracking.anchorUpdates {
             let roomAnchor = update.anchor
             
-            let centerPosition = roomAnchor.originFromAnchorTransform.columns.3.xyz
-            
             switch update.event {
             case .removed:
                 roomAnchors.removeValue(forKey: roomAnchor.id)
@@ -83,21 +81,45 @@ class AppState {
             case .added, .updated:
                 roomAnchors[roomAnchor.id] = roomAnchor
                 
-                await placeCookie(at: centerPosition, for: roomAnchor.id)
+                if !discoveredRoomIDs.contains(roomAnchor.id) {
+                    discoveredRoomIDs.append(roomAnchor.id)
+                }
                 
                 guard let roomMeshResource = roomAnchor.geometry.asMeshResource() else { continue }
-                                
+                
+                let bounds = roomMeshResource.bounds
+                let localPosition = SIMD3<Float>(
+                    bounds.center.x,
+                    bounds.min.y + 0.1,
+                    bounds.center.z
+                )
+                
+                let worldPosition4 =
+                roomAnchor.originFromAnchorTransform
+                * SIMD4(localPosition, 1)
+                
+                let worldPosition = worldPosition4.xyz
+                
+                print("방 ID: \(roomAnchor.id)")
+                print("쿠키 위치: \(worldPosition)")
+                
+                await placeCookie(at: worldPosition, for: roomAnchor.id)
+                
+                guard let roomMeshResource = roomAnchor.geometry.asMeshResource() else { continue }
+                
                 if update.event == .added {
                     let roomEntity = ModelEntity(mesh: roomMeshResource, materials: [occlusionMaterial])
                     roomEntity.transform = Transform(matrix: roomAnchor.originFromAnchorTransform)
                     roomEntities[roomAnchor.id] = roomEntity
                     roomEntity.isEnabled = roomAnchor.isCurrentRoom
                     roomRoot.addChild(roomEntity)
+                    print("방 추가됨")
                 } else if update.event == .updated {
                     guard let roomEntity = roomEntities[roomAnchor.id] else { continue }
                     roomEntity.model?.mesh = roomMeshResource
                     roomEntity.transform = Transform(matrix: roomAnchor.originFromAnchorTransform)
                     roomEntity.isEnabled = roomAnchor.isCurrentRoom
+                    print("방 업데이트됨")
                 }
                 
                 if roomAnchor.isCurrentRoom {
@@ -121,6 +143,8 @@ class AppState {
         
         let selectedCookie = availableCookies[safeIndex]
         
+        print("쿠키 배치 시작")
+        
         do {
             let cookieEntity = try await ModelEntity(named: selectedCookie.filename)
             cookieEntity.position = position
@@ -131,6 +155,15 @@ class AppState {
             print("\(roomIndex)번째 방에 \(selectedCookie.filename) 배치 완료")
         } catch {
             print("쿠키 불러오기 실패: \(error)")
+        }
+    }
+    
+    func monitorAuthorizationUpdates() async {
+        for await event in session.events {
+            guard case let .authorizationChanged(type, status) = event, type == .worldSensing else { continue }
+            
+            worldSensingAuthorizationStatus = status
+            print("World Sensing 권한 변경: \(status)")
         }
     }
 }

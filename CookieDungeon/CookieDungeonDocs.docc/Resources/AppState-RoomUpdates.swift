@@ -3,40 +3,61 @@
 func processRoomTrackingUpdates() async {
     for await update in roomTracking.anchorUpdates {
         let roomAnchor = update.anchor
-        
-        let centerPosition = roomAnchor.originFromAnchorTransform.columns.3.xyz
-        
+
         switch update.event {
         case .removed:
             roomAnchors.removeValue(forKey: roomAnchor.id)
+
             roomEntities[roomAnchor.id]?.removeFromParent()
             roomEntities.removeValue(forKey: roomAnchor.id)
-            
+
             cookieEntities[roomAnchor.id]?.removeFromParent()
             cookieEntities.removeValue(forKey: roomAnchor.id)
-            
+
         case .added, .updated:
             roomAnchors[roomAnchor.id] = roomAnchor
-            
-            await placeCookie(at: centerPosition, for: roomAnchor.id)
-            
-            guard let roomMeshResource = roomAnchor.geometry.asMeshResource() else { continue }
-            
-            if update.event == .added {
-                let roomEntity = ModelEntity(mesh: roomMeshResource, materials: [occlusionMaterial])
-                roomEntity.transform = Transform(matrix: roomAnchor.originFromAnchorTransform)
-                roomEntities[roomAnchor.id] = roomEntity
-                roomEntity.isEnabled = roomAnchor.isCurrentRoom
-                roomRoot.addChild(roomEntity)
-            } else if update.event == .updated {
-                guard let roomEntity = roomEntities[roomAnchor.id] else { continue }
-                roomEntity.model?.mesh = roomMeshResource
-                roomEntity.transform = Transform(matrix: roomAnchor.originFromAnchorTransform)
-                roomEntity.isEnabled = roomAnchor.isCurrentRoom
+
+            if !discoveredRoomIDs.contains(roomAnchor.id) {
+                discoveredRoomIDs.append(roomAnchor.id)
             }
-            
-            if roomAnchor.isCurrentRoom {
-                currentRoomID = roomAnchor.id
+
+            guard let roomMesh = roomAnchor.geometry.asMeshResource() else {
+                continue
+            }
+
+            let bounds = roomMesh.bounds
+            let localPosition = SIMD3<Float>(
+                bounds.center.x,
+                bounds.min.y + 0.1,
+                bounds.center.z
+            )
+            let worldPosition = (
+                roomAnchor.originFromAnchorTransform
+                * SIMD4(localPosition, 1)
+            ).xyz
+
+            await placeCookie(at: worldPosition, for: roomAnchor.id)
+
+            if update.event == .added {
+                let roomEntity = ModelEntity(
+                    mesh: roomMesh,
+                    materials: [occlusionMaterial]
+                )
+                roomEntity.transform = Transform(
+                    matrix: roomAnchor.originFromAnchorTransform
+                )
+                roomEntity.isEnabled = roomAnchor.isCurrentRoom
+                roomEntities[roomAnchor.id] = roomEntity
+                roomRoot.addChild(roomEntity)
+            } else {
+                guard let roomEntity = roomEntities[roomAnchor.id] else {
+                    continue
+                }
+                roomEntity.model?.mesh = roomMesh
+                roomEntity.transform = Transform(
+                    matrix: roomAnchor.originFromAnchorTransform
+                )
+                roomEntity.isEnabled = roomAnchor.isCurrentRoom
             }
         }
     }

@@ -13,8 +13,8 @@ struct CookieDungeonApp: App {
     @State private var appState = AppState()
 
     var body: some Scene {
-        ImmersiveSpace(id: "tutorial-room") {
-            TutorialRoomView()
+        ImmersiveSpace(id: "room") {
+            RoomView()
                 .environment(appState)
         }
         .immersionStyle(selection: .constant(.mixed), in: .mixed)
@@ -22,9 +22,8 @@ struct CookieDungeonApp: App {
         WindowGroup(id: "permission-denied") {
             PermissionRerequestView()
                 .environment(appState)
-                .frame(minWidth: 1000, maxWidth: 1500, minHeight: 400, maxHeight: 600)
         }
-        .defaultSize(width: 1000, height: 600)
+        .defaultSize(width: 860, height: 420)
         .windowResizability(.contentSize)
     }
 }

@@ -127,6 +127,9 @@
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A1E8888C302F046000A9CE53 /* Products */;
+			packageReferences = (
+				A1119CA230330501006C97EF /* XCLocalSwiftPackageReference "RealityKitContent" */,
+			);
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -364,9 +367,17 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		A1119CA230330501006C97EF /* XCLocalSwiftPackageReference "RealityKitContent" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/RealityKitContent;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		A1E88890302F046000A9CE53 /* RealityKitContent */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = A1119CA230330501006C97EF /* XCLocalSwiftPackageReference "RealityKitContent" */;
 			productName = RealityKitContent;
 		};
 /* End XCSwiftPackageProductDependency section */
