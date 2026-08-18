@@ -13,8 +13,8 @@ struct CookieDungeonApp: App {
     @State private var appState = AppState()
 
     var body: some Scene {
-        ImmersiveSpace(id: "tutorial-room") {
-            TutorialRoomView()
+        ImmersiveSpace(id: "room") {
+            RoomView()
                 .environment(appState)
         }
         .immersionStyle(selection: .constant(.mixed), in: .mixed)
