@@ -3,14 +3,13 @@ import RealityKit
 import RealityKitContent
 import SwiftUI
 
-struct TutorialRoomView: View {
+struct RoomView: View {
     @Environment(AppState.self) private var appState
     @Environment(\.openWindow) private var openWindow
     
     var body: some View {
         RealityView { content in
             content.add(appState.contentRoot)
-            content.add(appState.roomRoot)
         }
         .task {
             await appState.checkWorldSensingAuthorization()
@@ -29,6 +28,6 @@ struct TutorialRoomView: View {
 }
 
 #Preview(immersionStyle: .mixed) {
-    TutorialRoomView()
+    RoomView()
         .environment(AppState())
 }

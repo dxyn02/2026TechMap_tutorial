@@ -135,8 +135,24 @@ jobs:
               }
             }
 
-            // Also handle menu navigation that doesn't emit a history event.
-            document.addEventListener("click", scheduleScroll, true)
+            // Some DocC section links don't emit a history event. Only react to
+            // same-page fragment links so an unrelated page click can't restore
+            // the previously selected section.
+            document.addEventListener("click", event => {
+              const link = event.target instanceof Element
+                ? event.target.closest('a[href*="#"]')
+                : null
+              if (!link) return
+
+              const destination = new URL(link.href, window.location.href)
+              const isSamePage =
+                destination.origin === window.location.origin &&
+                destination.pathname === window.location.pathname
+
+              if (isSamePage && destination.hash) {
+                scheduleScroll()
+              }
+            }, true)
           })()
           EOF
 
