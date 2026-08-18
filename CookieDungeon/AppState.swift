@@ -21,7 +21,7 @@ class AppState {
     // 모든 가상 콘텐츠의 루트
     let contentRoot = Entity()
     // 방 범위 지오메트리의 루트
-    private let roomRoot = Entity()
+    let roomRoot = Entity()
     
     private var roomAnchors = [UUID: RoomAnchor]()
     private var worldAnchors = [UUID: WorldAnchor]()
@@ -85,23 +85,25 @@ class AppState {
                     discoveredRoomIDs.append(roomAnchor.id)
                 }
                 
-                guard let roomMeshResource =
-                        roomAnchor.geometry.asMeshResource()
-                else {
-                    continue
-                }
+                guard let roomMeshResource = roomAnchor.geometry.asMeshResource() else { continue }
                 
-                let localCenter = roomMeshResource.bounds.center
-                let transformedCenter =
+                let bounds = roomMeshResource.bounds
+                let localPosition = SIMD3<Float>(
+                    bounds.center.x,
+                    bounds.min.y + 0.1,
+                    bounds.center.z
+                )
+                
+                let worldPosition4 =
                 roomAnchor.originFromAnchorTransform
-                * SIMD4(localCenter.x, localCenter.y, localCenter.z, 1)
+                * SIMD4(localPosition, 1)
                 
-                let centerPosition = transformedCenter.xyz
+                let worldPosition = worldPosition4.xyz
                 
                 print("방 ID: \(roomAnchor.id)")
-                print("방 중심: \(centerPosition)")
+                print("쿠키 위치: \(worldPosition)")
                 
-                await placeCookie(at: centerPosition, for: roomAnchor.id)
+                await placeCookie(at: worldPosition, for: roomAnchor.id)
                 
                 guard let roomMeshResource = roomAnchor.geometry.asMeshResource() else { continue }
                 
@@ -153,6 +155,15 @@ class AppState {
             print("\(roomIndex)번째 방에 \(selectedCookie.filename) 배치 완료")
         } catch {
             print("쿠키 불러오기 실패: \(error)")
+        }
+    }
+    
+    func monitorAuthorizationUpdates() async {
+        for await event in session.events {
+            guard case let .authorizationChanged(type, status) = event, type == .worldSensing else { continue }
+            
+            worldSensingAuthorizationStatus = status
+            print("World Sensing 권한 변경: \(status)")
         }
     }
 }
