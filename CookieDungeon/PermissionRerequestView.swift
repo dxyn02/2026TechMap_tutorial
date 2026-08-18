@@ -13,6 +13,7 @@ import SwiftUI
 struct PermissionRerequestView: View {
     @Environment(AppState.self) private var appState
     @Environment(\.openURL) var openURL
+    @Environment(\.dismissWindow) private var dismissWindow
     @Environment(\.openImmersiveSpace) private var openImmersiveSpace
     
     var body: some View {
@@ -33,6 +34,7 @@ struct PermissionRerequestView: View {
                     Text("알 수 없는 오류 발생")
                 }
             }
+            .scaledToFit3D()
             
             VStack (spacing: 20) {
                 Text("권한이 거부됨")
@@ -53,14 +55,27 @@ struct PermissionRerequestView: View {
         .task {
             await appState.checkWorldSensingAuthorization()
             
-            if appState.worldSensingAuthorizationStatus == .notDetermined {
-                await appState.requestWorldSensingAuthorization()
-            }
+            async let monitor: Void = appState.monitorAuthorizationUpdates()
             
-            if appState.worldSensingAuthorizationStatus == .denied {
-                return
-            } else if appState.worldSensingAuthorizationStatus == .allowed {
-                await openImmersiveSpace(id: "tutorial-room")
+            await monitor
+        }
+        .onChange(of: appState.worldSensingAuthorizationStatus) { _, status in
+            guard status == .allowed else { return }
+            
+            Task {
+                let result = await openImmersiveSpace(id: "room")
+                
+                switch result {
+                case .opened, .error:
+                    await appState.runARKitSession()
+                    dismissWindow(id: "permission-denied")
+                    
+                case .userCancelled:
+                    break
+                    
+                @unknown default:
+                    break
+                }
             }
         }
     }
