@@ -5,13 +5,15 @@
 //  Created by 앤디 on 8/14/26.
 //
 
-import SwiftUI
+import ARKit
 import RealityKit
 import RealityKitContent
+import SwiftUI
 
 struct PermissionRerequestView: View {
     @Environment(AppState.self) private var appState
     @Environment(\.openURL) var openURL
+    @Environment(\.openImmersiveSpace) private var openImmersiveSpace
     
     var body: some View {
         HStack (spacing: 40) {
@@ -48,6 +50,19 @@ struct PermissionRerequestView: View {
             }
         }
         .padding(20)
+        .task {
+            await appState.checkWorldSensingAuthorization()
+            
+            if appState.worldSensingAuthorizationStatus == .notDetermined {
+                await appState.requestWorldSensingAuthorization()
+            }
+            
+            if appState.worldSensingAuthorizationStatus == .denied {
+                return
+            } else if appState.worldSensingAuthorizationStatus == .allowed {
+                await openImmersiveSpace(id: "tutorial-room")
+            }
+        }
     }
 }
 
