@@ -69,8 +69,6 @@ class AppState {
         for await update in roomTracking.anchorUpdates {
             let roomAnchor = update.anchor
             
-            let centerPosition = roomAnchor.originFromAnchorTransform.columns.3.xyz
-            
             switch update.event {
             case .removed:
                 roomAnchors.removeValue(forKey: roomAnchor.id)
@@ -83,21 +81,43 @@ class AppState {
             case .added, .updated:
                 roomAnchors[roomAnchor.id] = roomAnchor
                 
+                if !discoveredRoomIDs.contains(roomAnchor.id) {
+                    discoveredRoomIDs.append(roomAnchor.id)
+                }
+                
+                guard let roomMeshResource =
+                        roomAnchor.geometry.asMeshResource()
+                else {
+                    continue
+                }
+                
+                let localCenter = roomMeshResource.bounds.center
+                let transformedCenter =
+                roomAnchor.originFromAnchorTransform
+                * SIMD4(localCenter.x, localCenter.y, localCenter.z, 1)
+                
+                let centerPosition = transformedCenter.xyz
+                
+                print("방 ID: \(roomAnchor.id)")
+                print("방 중심: \(centerPosition)")
+                
                 await placeCookie(at: centerPosition, for: roomAnchor.id)
                 
                 guard let roomMeshResource = roomAnchor.geometry.asMeshResource() else { continue }
-                                
+                
                 if update.event == .added {
                     let roomEntity = ModelEntity(mesh: roomMeshResource, materials: [occlusionMaterial])
                     roomEntity.transform = Transform(matrix: roomAnchor.originFromAnchorTransform)
                     roomEntities[roomAnchor.id] = roomEntity
                     roomEntity.isEnabled = roomAnchor.isCurrentRoom
                     roomRoot.addChild(roomEntity)
+                    print("방 추가됨")
                 } else if update.event == .updated {
                     guard let roomEntity = roomEntities[roomAnchor.id] else { continue }
                     roomEntity.model?.mesh = roomMeshResource
                     roomEntity.transform = Transform(matrix: roomAnchor.originFromAnchorTransform)
                     roomEntity.isEnabled = roomAnchor.isCurrentRoom
+                    print("방 업데이트됨")
                 }
                 
                 if roomAnchor.isCurrentRoom {
@@ -120,6 +140,8 @@ class AppState {
         let safeIndex = roomIndex % availableCookies.count
         
         let selectedCookie = availableCookies[safeIndex]
+        
+        print("쿠키 배치 시작")
         
         do {
             let cookieEntity = try await ModelEntity(named: selectedCookie.filename)
