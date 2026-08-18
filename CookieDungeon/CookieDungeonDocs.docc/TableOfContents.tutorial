@@ -1,14 +1,13 @@
 @Tutorials(name: "Cookie Dungeon 개발 가이드") {
-    @Intro(title: "Cookie Dungeon 공간 컴퓨팅 튜토리얼") {
-        이 튜토리얼은 visionOS에서 방을 인식하고 객체를 배치하는 과정을 안내합니다.
-        
+    @Intro(title: "visionOS 26 Room Tracking 튜토리얼") {
+        ARKit이 인식한 방의 경계로 현실적인 오클루전을 만들고, 발견한 방마다 서로 다른 USDZ 쿠키를 배치해 봅니다.
     }
-    
-    @Chapter(name: "방 인식과 렌더링") {
-        RoomTrackingProvider를 사용하여 방의 구조를 파악해 봅니다.
-        
-        @Image(source: "PreparationStep.png", alt: "챕터 이미지")
-        
-        @TutorialReference(tutorial: "doc:RoomTracking") 
+
+    @Chapter(name: "방 인식과 공간 콘텐츠") {
+        Session·Provider·Anchor의 데이터 흐름부터 권한, RealityView, 방 메시, 오클루전, 방별 콘텐츠 배치까지 단계별로 구현합니다.
+
+        @Image(source: "PreparationStep.png", alt: "Apple Vision Pro에서 Room Tracking을 준비하는 모습")
+
+        @TutorialReference(tutorial: "doc:RoomTracking")
     }
 }

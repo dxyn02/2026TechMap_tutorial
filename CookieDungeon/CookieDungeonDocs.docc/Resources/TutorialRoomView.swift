@@ -10,6 +10,7 @@ struct TutorialRoomView: View {
     var body: some View {
         RealityView { content in
             content.add(appState.contentRoot)
+            content.add(appState.roomRoot)
         }
         .task {
             await appState.checkWorldSensingAuthorization()
