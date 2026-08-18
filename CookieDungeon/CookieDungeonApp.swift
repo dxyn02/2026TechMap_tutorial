@@ -22,9 +22,7 @@ struct CookieDungeonApp: App {
         WindowGroup(id: "permission-denied") {
             PermissionRerequestView()
                 .environment(appState)
-                .frame(minWidth: 1000, maxWidth: 1500, minHeight: 400, maxHeight: 600)
         }
-        .defaultSize(width: 1000, height: 600)
         .windowResizability(.contentSize)
     }
 }
