@@ -1,152 +1,106 @@
-@Tutorial(time: 45) {
-    @Intro(title: "Room Tracking으로 방마다 다른 쿠키 배치하기") {
-        visionOS 26의 `RoomTrackingProvider`로 방의 경계 메시를 받아, 방마다 서로 다른 USDZ 쿠키를 배치하는 앱을 만듭니다.
-
-        이 과정에서 ARKit의 Session·Provider·Anchor 관계, World Sensing 권한, `RealityView`의 콘텐츠 그래프, 좌표 변환, 오클루전까지 함께 살펴봅니다.
+@Tutorial(time: 30) {
+    @Intro(title: "방 인식과 오클루전") {
+        ARKit의 `RoomTrackingProvider`는 사용자가 있는 방의 형태를 실시간으로 알려 줍니다. 이 챕터에서는 그 원시 데이터를 RealityKit이 그릴 수 있는 메시로 바꾸고, 투명한 방 껍데기를 세워 옆방의 물체가 벽을 뚫고 보이지 않게 만듭니다.
     }
-
-    @Section(title: "ARKit의 데이터 흐름 이해하기") {
+    
+    @Section(title: "ARKit 지오메트리를 RealityKit 메시로 바꾸기") {
         @ContentAndMedia {
-            ARKit 기반 기능은 Session, Provider, Anchor의 세 층으로 이해할 수 있습니다.
-
-            **Session**인 `ARKitSession`은 권한을 확인하고 하나 이상의 Provider를 함께 실행하는 실행 관리자입니다. Session 자체가 방 메시를 만들지는 않습니다.
-
-            **Provider**는 원하는 추적 기능의 데이터 생산자입니다. 이 앱은 좌표계 추적을 위한 `WorldTrackingProvider`와 방 경계 추적을 위한 `RoomTrackingProvider`를 같은 Session에서 실행합니다.
-
-            **Anchor**는 특정 시점에 Provider가 관찰한 공간 데이터입니다. `RoomAnchor`는 고유한 `id`, 방 경계 `geometry`, 앵커 좌표를 원점 좌표로 옮기는 `originFromAnchorTransform`, 현재 사용자가 있는 방인지를 나타내는 `isCurrentRoom`을 제공합니다. Provider의 `anchorUpdates`는 Anchor의 추가·갱신·제거 이벤트를 비동기 스트림으로 전달합니다.
-
-            흐름을 한 줄로 표현하면 **권한 확인 → Session에서 Provider 실행 → Provider가 Anchor 업데이트 전달 → RealityKit Entity 갱신**입니다.
+            ARKit은 방의 형태를 GPU 버퍼로 넘겨줍니다. RealityKit은 `MeshResource`를 원합니다. 둘 사이를 잇는 변환 계층이 필요합니다.
+            
+            > 출처: 이 섹션의 `Extensions.swift`는 Apple의 **Building Local Experiences With Room Tracking** 샘플 코드에서 가져왔습니다. 포인터 연산으로 정점 버퍼를 읽는 부분은 직접 쓰기보다 검증된 구현을 그대로 쓰는 편이 안전합니다.
         }
-
+        
         @Steps {
             @Step {
-                `AppState`를 `@Observable`, `@MainActor`로 만들고 Session, 두 Provider, RealityKit 루트 Entity와 방별 상태 저장소를 선언합니다.
-
-                `contentRoot`에는 쿠키를, `roomRoot`에는 오클루전용 방 메시를 넣습니다. 두 루트를 분리하면 렌더링 목적과 생명주기를 구분하기 쉽습니다.
-
-                @Code(name: "AppState-Properties.swift", file: AppState-Properties.swift)
+                `Extensions.swift`를 만들고 `SIMD4`에서 앞 세 성분만 꺼내는 편의 속성을 추가합니다.
+                
+                좌표 변환에는 4×4 행렬을 쓰기 때문에 결과가 `SIMD4`로 나옵니다. 실제 위치는 앞의 세 성분이므로 매번 꺼내 쓰게 됩니다.
+                
+                @Code(name: "Extensions.swift", file: Extensions-01-SIMD4.swift)
             }
-        }
-    }
-
-    @Section(title: "World Sensing 권한 준비하기") {
-        @ContentAndMedia {
-            Room Tracking은 주변 공간의 구조를 읽으므로 World Sensing 권한이 필요합니다. Info.plist에 사용 목적을 먼저 선언하고, 앱에서 `.worldSensing` 권한을 조회하거나 요청해야 합니다.
-
-            이 프로젝트는 **Target > Info > Custom visionOS Target Properties**에 `Privacy - World Sensing Usage Description`을 추가했습니다. 원시 키는 `NSWorldSensingUsageDescription`이며, 값은 사용자에게 권한이 필요한 이유를 구체적으로 설명하는 문장이어야 합니다.
-
-            빌드 설정으로 관리할 때는 `INFOPLIST_KEY_NSWorldSensingUsageDescription`에 같은 문장을 넣어도 최종 Info.plist에 동일한 키가 생성됩니다. 이 프로젝트가 사용하는 방식입니다.
-
-            ARKit 공간 데이터는 앱이 Immersive Space(Full Space)를 열어 다른 앱이 가려진 동안에만 사용할 수 있습니다. 또한 Room Tracking은 야외나 Travel Mode에서 지원되지 않으므로 실내에서 실행합니다.
-        }
-
-        @Steps {
+            
             @Step {
-                Info.plist를 직접 편집한다면 다음 키-값을 추가합니다.
-
-                @Code(name: "Info.plist", file: WorldSensing-Info.plist)
+                원시 버퍼를 Swift 배열로 옮기는 익스텐션을 추가합니다.
+                
+                `GeometrySource`는 정점 데이터를 담은 메모리 블록에 대한 포인터입니다. `offset`과 `stride`를 직접 계산해 한 칸씩 읽어야 하는 이유는, 데이터가 촘촘히 붙어 있지 않고 일정 간격으로 흩어져 있을 수 있기 때문입니다. `GeometryElement`는 어떤 정점 셋이 하나의 삼각형을 이루는지 알려 주는 인덱스 목록입니다.
+                
+                @Code(name: "Extensions.swift", file: Extensions-02-GeometrySource.swift, previousFile: Extensions-01-SIMD4.swift)
             }
-
+            
             @Step {
-                Session에서 현재 상태를 조회하는 메서드와 최초 요청 메서드를 구현합니다. 반환 딕셔너리에서 `.worldSensing`의 결과를 꺼내 화면 상태에 저장합니다.
-
-                권한 요청은 시스템 다이얼로그를 띄울 수 있으므로 사용자가 기능을 시작하는 맥락에서 호출합니다. 이미 거부된 권한은 다시 다이얼로그로 요청할 수 없으므로 설정 앱으로 안내해야 합니다.
-
-                @Code(name: "AppState-Authorization.swift", file: AppState-Authorization.swift)
-            }
-
-            @Step {
-                권한이 `.allowed`일 때 두 Provider를 Session에 전달하고, Room Anchor 업데이트 처리 작업을 시작합니다.
-
-                @Code(name: "AppState-Session.swift", file: AppState-Session.swift)
+                두 조각을 합쳐 `MeshResource`를 만드는 익스텐션을 완성합니다.
+                
+                `MeshDescriptor`에 정점 위치와 삼각형 인덱스를 넣으면 RealityKit이 그릴 수 있는 메시가 나옵니다. 정점 배열이 비었을 때 `nil`을 돌려주는 방어 코드가 중요합니다. 방을 스캔하는 초기 몇 프레임 동안은 지오메트리가 비어서 들어오기 때문입니다.
+                
+                @Code(name: "Extensions.swift", file: Extensions-03-MeshResource.swift, previousFile: Extensions-02-GeometrySource.swift)
             }
         }
     }
-
-    @Section(title: "RealityView와 content 연결하기") {
+    
+    @Section(title: "ARKit 세션 실행하기") {
         @ContentAndMedia {
-            `RealityView`는 SwiftUI 계층 안에 RealityKit의 3D 장면을 표시합니다. 생성 클로저의 `content`는 SwiftUI의 `View`가 아니라 `RealityViewContent` 값으로, RealityKit Entity 계층을 장면에 추가하는 인터페이스입니다.
-
-            생성 클로저는 장면을 구성할 때 실행되므로 여기서는 오래 유지할 두 루트 Entity만 `content.add(_:)`로 등록합니다. 이후 Anchor 업데이트마다 클로저를 다시 구성하지 않고 `AppState`가 루트의 자식을 추가·수정·제거합니다. Entity는 참조 타입이므로 변경 사항이 RealityView에 반영됩니다.
-
-            `contentRoot`는 쿠키를 실제 공간에 그리며, `roomRoot`는 색을 그리지 않고 깊이만 기록하는 오클루전 메시를 그립니다.
+            프로바이더 두 개를 준비하고 세션을 띄웁니다.
+            
+            엔티티 루트가 둘로 나뉜 것에 주목하세요. `contentRoot`에는 쿠키가, `roomRoot`에는 방 껍데기가 붙습니다. 성격이 다른 두 그룹을 나눠 두면 나중에 한쪽만 통째로 켜고 끄기가 쉽습니다. `roomRoot`이 `private`이 아닌 이유는 뷰에서 직접 씬에 추가해야 하기 때문입니다.
         }
-
+        
         @Steps {
             @Step {
-                두 루트를 생성 클로저의 `content`에 추가한 뒤 `.task`에서 권한 상태에 따라 요청, 거부 안내, Session 실행으로 분기합니다.
-
-                @Code(name: "RoomView.swift", file: TutorialRoomView.swift)
+                `AppState`에 프로바이더와 엔티티 저장소를 추가합니다.
+                
+`RoomTrackingProvider`는 방 형태를, `WorldTrackingProvider`는 그 방이 놓인 월드 좌표 기준을 담당합니다. 방 좌표를 월드 좌표로 옮기려면 기준이 되는 월드 원점이 필요하므로 둘을 함께 실행합니다.
+                
+                @Code(name: "AppState.swift", file: AppState-04-Providers.swift, previousFile: AppState-03-MonitorAuth.swift)
+            }
+            
+            @Step {
+                세션을 실행하는 `runARKitSession`을 추가합니다.
+                
+권한이 없으면 즉시 빠져나옵니다. `session.run`에 프로바이더 두 개를 함께 넘긴 뒤, 업데이트 수신 루프를 별도 `Task`로 띄웁니다 — 이 루프는 앱이 사는 동안 끝나지 않으므로 여기서 `await`로 기다리면 함수가 영영 반환되지 않습니다. 챕터 1에서 이름만 불러 두었던 함수가 이제 실체를 갖고, 프로젝트가 처음으로 오류 없이 빌드됩니다.
+                
+                @Code(name: "AppState.swift", file: AppState-05-RunSession.swift, previousFile: AppState-04-Providers.swift)
+            }
+            
+            @Step {
+                `RoomView`에서 `roomRoot`도 씬에 추가합니다.
+                
+                한 줄이지만 빠뜨리면 오클루전이 통째로 동작하지 않습니다. 다음 섹션에서 만들 방 껍데기는 `roomRoot`의 자식으로 붙는데, `roomRoot` 자신이 씬에 없으면 그 자식들도 존재하지 않는 것과 같습니다. 아무 오류도 나지 않고 그저 아무 일도 일어나지 않기 때문에 원인을 찾기 어렵습니다.
+                
+                @Code(name: "RoomView.swift", file: RoomView-03-RoomRoot.swift, previousFile: RoomView-02-Permission.swift)
             }
         }
     }
-
-    @Section(title: "RoomAnchor를 RealityKit 메시로 바꾸기") {
+    
+    @Section(title: "방 업데이트 수신하기") {
         @ContentAndMedia {
-            `RoomAnchor.geometry`는 ARKit의 저수준 버퍼 형태이므로 `ModelEntity`가 사용할 `MeshResource`로 변환해야 합니다.
-
-            정점 버퍼의 위치를 `[SIMD3<Float>]`로, 면 버퍼의 인덱스를 `[UInt32]`로 읽어 `MeshDescriptor`를 구성합니다. 모든 면에 하나의 재질 슬롯을 지정하고 삼각형 primitive를 만든 다음 `MeshResource.generate(from:)`를 호출합니다.
-
-            이 메시에는 바닥·벽·천장으로 구성된 방의 경계가 들어 있습니다. 정점 좌표는 Room Anchor의 **로컬 좌표계**에 있으므로 Entity를 장면에 놓을 때 `originFromAnchorTransform`을 적용해야 실제 공간과 일치합니다.
+            방 정보는 내가 물어봐서 얻는 게 아니라, 바뀔 때마다 시스템이 밀어 줍니다.
+            
+            여기서 `originFromAnchorTransform`이 처음 등장합니다. 방 메시의 정점 좌표는 그 방의 앵커를 원점으로 삼은 **방 로컬 좌표**입니다. 반면 RealityKit 씬은 **월드 좌표**로 돌아갑니다. 이 4×4 행렬이 "이 방의 원점이 월드 어디에, 어떤 방향으로 놓여 있는가"를 담고 있어서, 엔티티의 `transform`에 그대로 넣어 주면 메시가 실제 방과 정확히 겹칩니다. 빠뜨리면 방 껍데기가 월드 원점 근처에 엉뚱하게 놓입니다.
         }
-
+        
         @Steps {
             @Step {
-                ARKit Geometry 버퍼를 배열로 읽고 `MeshResource`를 생성하는 익스텐션을 추가합니다.
-
-                @Code(name: "Extensions.swift", file: Extensions.swift)
+                `anchorUpdates`를 `for await`로 구독하는 루프를 만듭니다.
+                
+                매 프레임 "지금 무슨 방이지?"라고 되묻는 폴링 방식이 아닙니다. 방이 새로 발견되거나(`added`), 형태가 더 정확해지거나(`updated`), 추적을 잃으면(`removed`) 그때마다 이벤트가 하나씩 들어옵니다. 사라진 방의 엔티티를 정리하지 않으면 그 방을 떠나도 콘텐츠가 허공에 남습니다.
+                
+                @Code(name: "AppState.swift", file: AppState-06-UpdateLoop.swift, previousFile: AppState-05-RunSession.swift)
             }
-        }
-    }
-
-    @Section(title: "방 업데이트와 오클루전 구현하기") {
-        @ContentAndMedia {
-            `roomTracking.anchorUpdates`를 `for await`로 순회하면 방이 발견될 때 `.added`, 경계나 현재 방 상태가 달라질 때 `.updated`, 더 이상 추적하지 않을 때 `.removed`를 받습니다. 각 방의 `UUID`를 딕셔너리 키로 사용하면 한 Anchor와 그 쿠키·오클루전 Entity를 정확히 연결할 수 있습니다.
-
-            오클루전의 핵심은 방 메시와 `OcclusionMaterial`입니다. 이 재질은 벽 색을 화면에 그리지 않지만 깊이 버퍼에는 방 경계를 기록합니다. 따라서 실제 벽 뒤에 있는 쿠키 픽셀은 깊이 테스트에서 탈락해 보이지 않고, 사용자는 가상 물체가 현실 벽에 가려진 것처럼 느낍니다.
-
-            모든 방 껍데기를 동시에 활성화하면 현재 방 안의 콘텐츠까지 불필요하게 가릴 수 있습니다. 이 앱은 `roomAnchor.isCurrentRoom`인 메시만 `isEnabled = true`로 두어, 현재 방의 경계가 다른 방의 쿠키를 가리도록 합니다. `.updated` 때 메시와 Transform뿐 아니라 이 상태도 갱신합니다.
-        }
-
-        @Steps {
+            
             @Step {
-                Anchor 로컬 메시의 bounds에서 바닥보다 10cm 높은 중앙점을 계산합니다. 그 점에 `originFromAnchorTransform`을 곱해 RealityView 루트가 사용하는 원점 좌표로 변환합니다.
-
-                그다음 쿠키를 배치하고, Anchor 이벤트에 맞춰 오클루전 Entity를 생성·갱신·제거합니다.
-
-                @Code(name: "AppState-RoomUpdates.swift", file: AppState-RoomUpdates.swift)
+                방 메시로 투명한 껍데기를 세웁니다.
+                
+`OcclusionMaterial`은 눈에 보이지 않으면서 깊이 값만 기록하는 재질입니다. 방 모양 그대로 이 재질을 입혀 두면, 내 방 벽 너머에 있는 가상 물체는 벽에 가려져 보이지 않게 됩니다. 이게 없으면 옆방 쿠키가 벽을 뚫고 둥둥 떠 보입니다.
+                
+                @Code(name: "AppState.swift", file: AppState-07-Occlusion.swift, previousFile: AppState-06-UpdateLoop.swift)
             }
-        }
-    }
-
-    @Section(title: "방마다 다른 쿠키 배치하기") {
-        @ContentAndMedia {
-            USDZ 파일명과 열거형의 원시값을 같게 두고 `CaseIterable`로 전체 쿠키 목록을 얻습니다. 파일은 앱 Target의 리소스에 포함되어 있어야 합니다.
-
-            새 `RoomAnchor.id`가 처음 보이면 `discoveredRoomIDs`에 추가합니다. 이 배열에서의 인덱스가 방의 발견 순번이고, `roomIndex % availableCookies.count`가 쿠키 인덱스가 됩니다. 예를 들어 쿠키가 세 종류라면 0·1·2번째 방에는 서로 다른 쿠키가, 3번째 방부터는 같은 순서가 반복됩니다.
-
-            `cookieEntities[roomID]`가 이미 있으면 모델을 다시 로드하지 않고 위치만 갱신합니다. 따라서 `.updated`가 자주 와도 방마다 Entity는 하나만 유지됩니다. `.removed`에서는 해당 방의 쿠키를 장면과 딕셔너리에서 함께 제거합니다.
-
-            발견 순서 기반 매핑은 실행 중에는 안정적이지만 앱을 다시 실행하면 달라질 수 있습니다. 방과 쿠키의 영속적인 대응이 필요하면 Anchor 식별 정보를 별도로 저장하는 설계가 추가로 필요합니다.
-        }
-
-        @Steps {
+            
             @Step {
-                세 USDZ 파일을 표현하는 열거형을 만듭니다.
-
-                @Code(name: "CookieModel.swift", file: CookieModel.swift)
-            }
-
-            @Step {
-                방 순번으로 모델을 선택하고 비동기로 로드한 뒤, 앞에서 구한 원점 좌표에 배치합니다.
-
-                @Code(name: "AppState-PlaceCookie.swift", file: AppState-PlaceCookie.swift)
-            }
-
-            @Step {
-                Apple Vision Pro에서 앱을 실행하고 World Sensing 권한을 허용합니다. 문을 지나 다른 방으로 이동하면서 각 방 중앙에 다른 쿠키가 나타나는지, 이전 방의 쿠키가 실제 벽에 가려지는지 확인합니다.
-
-                Room Tracking은 실제 공간 정보가 필요한 기능이므로 최종 동작과 오클루전은 기기에서 검증합니다.
+                `isCurrentRoom`으로 지금 있는 방의 껍데기만 켭니다.
+                
+ARKit은 이전에 스캔한 방들도 함께 알려 줍니다. 껍데기를 전부 켜 두면 서로 겹쳐 엉뚱한 것까지 가리므로, 내가 서 있는 방 하나만 켭니다. 여기까지 실기기에서 실행하면 콘솔에 방 감지 로그가 찍히지만 눈에 보이는 것은 없습니다 — 오클루전 재질은 투명하니까요.
+                
+                @Code(name: "AppState.swift", file: AppState-08-CurrentRoom.swift, previousFile: AppState-07-Occlusion.swift)
             }
         }
     }
