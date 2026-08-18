@@ -35,6 +35,7 @@ struct PermissionRerequestView: View {
                 }
             }
             .scaledToFit3D()
+            .frame(width: 340, height: 300)
             
             VStack (spacing: 20) {
                 Text("권한이 거부됨")
@@ -42,14 +43,17 @@ struct PermissionRerequestView: View {
                 
                 Text("앗! 오븐이 잠겨있어요.\n오븐에서 쿠키가 탈출할 수 있도록 권한을 허용해주세요.")
                     .multilineTextAlignment(.center)
+                    .lineLimit(nil)
+                    .fixedSize(horizontal: false, vertical: true)
                     
                 Button("설정으로 이동하기") {
                     if let url = URL(string: UIApplication.openSettingsURLString) {
                         openURL(url)
                     }
                 }
-
             }
+            .frame(width: 400)
+            .layoutPriority(1)
         }
         .padding(20)
         .task {

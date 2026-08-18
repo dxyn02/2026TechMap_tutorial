@@ -23,6 +23,7 @@ struct CookieDungeonApp: App {
             PermissionRerequestView()
                 .environment(appState)
         }
+        .defaultSize(width: 860, height: 420)
         .windowResizability(.contentSize)
     }
 }
