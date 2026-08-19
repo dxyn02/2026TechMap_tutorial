@@ -97,9 +97,7 @@ class AppState {
                 print("쿠키 위치: \(worldPosition)")
                 
                 await placeCookie(at: worldPosition, for: roomAnchor.id)
-                
-                guard let roomMeshResource = roomAnchor.geometry.asMeshResource() else { continue }
-                
+                                
                 if update.event == .added {
                     let roomEntity = ModelEntity(mesh: roomMeshResource, materials: [occlusionMaterial])
                     roomEntity.transform = Transform(matrix: roomAnchor.originFromAnchorTransform)

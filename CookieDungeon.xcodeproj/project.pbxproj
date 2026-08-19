@@ -7,11 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A1DACD1030358D3B000135B5 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = A1DACD0F30358D3B000135B5 /* README.md */; };
 		A1E88891302F046000A9CE53 /* RealityKitContent in Frameworks */ = {isa = PBXBuildFile; productRef = A1E88890302F046000A9CE53 /* RealityKitContent */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		A1119CA130330501006C97EF /* docc-deploy.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; name = "docc-deploy.yml"; path = ".github/workflows/docc-deploy.yml"; sourceTree = SOURCE_ROOT; };
+		A1DACD0F30358D3B000135B5 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		A1E8888B302F046000A9CE53 /* CookieDungeon.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CookieDungeon.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1E8888F302F046000A9CE53 /* RealityKitContent */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = RealityKitContent; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -52,6 +54,7 @@
 		A1E88882302F046000A9CE53 = {
 			isa = PBXGroup;
 			children = (
+				A1DACD0F30358D3B000135B5 /* README.md */,
 				A1119CA130330501006C97EF /* docc-deploy.yml */,
 				A1E8888D302F046000A9CE53 /* CookieDungeon */,
 				A1E8888E302F046000A9CE53 /* Packages */,
@@ -125,11 +128,11 @@
 			);
 			mainGroup = A1E88882302F046000A9CE53;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				A1119CA230330501006C97EF /* XCLocalSwiftPackageReference "Packages/RealityKitContent" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A1E8888C302F046000A9CE53 /* Products */;
-			packageReferences = (
-				A1119CA230330501006C97EF /* XCLocalSwiftPackageReference "RealityKitContent" */,
-			);
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -143,6 +146,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1DACD1030358D3B000135B5 /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -368,7 +372,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		A1119CA230330501006C97EF /* XCLocalSwiftPackageReference "RealityKitContent" */ = {
+		A1119CA230330501006C97EF /* XCLocalSwiftPackageReference "Packages/RealityKitContent" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/RealityKitContent;
 		};
@@ -377,7 +381,7 @@
 /* Begin XCSwiftPackageProductDependency section */
 		A1E88890302F046000A9CE53 /* RealityKitContent */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A1119CA230330501006C97EF /* XCLocalSwiftPackageReference "RealityKitContent" */;
+			package = A1119CA230330501006C97EF /* XCLocalSwiftPackageReference "Packages/RealityKitContent" */;
 			productName = RealityKitContent;
 		};
 /* End XCSwiftPackageProductDependency section */
