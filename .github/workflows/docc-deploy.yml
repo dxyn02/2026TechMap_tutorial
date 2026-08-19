@@ -3,7 +3,10 @@ name: Deploy DocC to GitHub Pages
 on:
   push:
     branches:
-      - main
+      - develop
+    paths:
+      - 'CookieDungeon/CookieDungeonDocs.docc/**'
+      - '.github/workflows/docc-deploy.yml'
   workflow_dispatch:
 
 permissions:
