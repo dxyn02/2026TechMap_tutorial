@@ -8,15 +8,13 @@
     @Section(title: "프로젝트 만들고 Info.plist에 Key 추가하기") {
         @ContentAndMedia {
             visionOS 프로젝트를 만들고, 앱이 어떤 화면으로 시작할지 정합니다.
-            
-            visionOS 앱은 시작 시 Window로 열 수도 있고, `ImmersiveSpace`로 곧장 들어갈 수도 있습니다. 이 앱은 `ImmersiveSpace`로 시작합니다.
         }
         
         @Steps {
             @Step {
                 Xcode에서 **File → New → Project**를 열고 **visionOS → App** 템플릿을 고른 뒤, Product Name을 `CookieDungeon`으로 지정합니다.
                 
-                다음 화면의 두 옵션이 중요합니다. **Initial Scene**을 `Immersive Space`로, **Immersion Style**은 `Mixed`를 고릅니다.
+                **Immersion Style**은 `Mixed`를 고릅니다.
                 
                 @Image(source: "Chapter-01.png", alt: "프로젝트 세팅")
             }
