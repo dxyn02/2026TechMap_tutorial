@@ -16,7 +16,7 @@
             @Step {
                 Xcode에서 **File → New → Project**를 열고 **visionOS → App** 템플릿을 고른 뒤, Product Name을 `CookieDungeon`으로 지정합니다.
                 
-                다음 화면의 두 옵션이 중요합니다. **Initial Scene**을 `Immersive Space`로 두면 앱을 켜자마자 평면 창이 아니라 몰입 공간이 열립니다. 룸 트래킹은 몰입 공간 안에서만 동작하므로 이 앱에는 그쪽이 맞습니다. **Immersion Style**은 `Mixed`를 고릅니다. 패스스루로 실제 방이 보이는 상태 위에 가상 물체를 얹는 방식이라, 화면을 완전히 가리는 `Full`을 고르면 방을 인식할 이유 자체가 사라집니다.
+                다음 화면의 두 옵션이 중요합니다. **Initial Scene**을 `Immersive Space`로 두면 앱을 켜자마자 평면 창이 아니라 몰입 공간이 열립니다. 룸 트래킹은 몰입 공간 안에서만 동작하므로 이 앱에는 그쪽이 맞습니다. **Immersion Style**은 `Mixed`를 고릅니다.
                 
                 @Image(source: "Chapter-01.png", alt: "프로젝트 세팅")
             }
