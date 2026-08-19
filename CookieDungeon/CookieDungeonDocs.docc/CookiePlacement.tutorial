@@ -35,11 +35,7 @@
             @Step {
                 방 Mesh에서 쿠키를 놓을 좌표를 계산합니다.
                 
-                `bounds`는 방을 꽉 채우는 가상의 상자의 크기 데이터입니다. 이 상자의 x, z 축 길이의 중간 값은 방의 중심이 되며, y축 길이의 최솟값은 방바닥의 높이를 의미합니다.
-                
-                `localPosition`은 방을 기준으로 한 **로컬 좌표**이므로 이를 **월드 좌표**로 변환해줘야 합니다. `localPosition`을 `SIMD4` 타입으로 변환하여 `originFromAnchorTransform`와 곱해주면 **월드 좌표**로 변환할 수 있습니다.
-                
-                마지막으로, 행렬 곱셈을 위해 임시로 만든 `SIMD4` 타입에서 x, y, z 값만 추출하여 해당 좌표에 쿠키를 배치합니다.
+                `bounds`는 방을 꽉 채우는 가상의 상자의 크기 데이터입니다. 이 상자의 x, z축 길이의 중간 값은 방의 중심이 되며, y축 길이의 최솟값은 방바닥의 높이를 의미합니다. `localPosition`은 방을 기준으로 한 **로컬 좌표**이므로 `SIMD4` 타입으로 변환하여 `originFromAnchorTransform`과 곱해 **월드 좌표**로 변환합니다. 마지막으로, 행렬 곱셈을 위해 임시로 만든 `SIMD4` 타입에서 x, y, z 값만 추출하여 해당 좌표에 쿠키를 배치합니다.
                 
                 @Code(name: "AppState.swift", file: AppState-10-CookiePosition.swift, previousFile: AppState-09-DiscoveredRooms.swift)
             }

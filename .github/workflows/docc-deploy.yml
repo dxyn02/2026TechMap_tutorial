@@ -188,6 +188,12 @@ jobs:
             color: #111 !important;
           }
 
+          /* Keep preparation lists readable inside the centered tutorial hero. */
+          .tutorials-overview .hero .content ul,
+          .tutorials-overview .hero .content ul p {
+            text-align: left;
+          }
+
           body[data-color-scheme="light"]:has(.tutorials-overview) .nav.theme-dark {
             --color-nav-dark-color: #000;
             --color-nav-dark-current-link: #000;
