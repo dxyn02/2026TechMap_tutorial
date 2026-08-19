@@ -1,5 +1,5 @@
 @Tutorials(name: "Cookie Dungeon") {
-    @Intro(title: "visionOS 룸 트래킹으로 방마다 다른 쿠키 놓기") {
+    @Intro(title: "visionOS Room Tracking으로 방마다 다른 쿠키 놓기") {
         내가 서 있는 방을 앱이 알아보게 만듭니다. ARKit의 `RoomTrackingProvider`로 방의 형태를 실시간으로 읽어 쿠키를 배치하고, 벽 너머의 쿠키를 자연스럽게 가리고, 방을 옮길 때마다 다른 쿠키가 나타납니다.
         
         ## 준비물
@@ -10,7 +10,7 @@
     }
     
     @Chapter(name: "프로젝트 세팅 및 권한 요청") {
-        룸 트래킹을 위해서는 사용자의 권한 허용이 필요합니다. Immersion Space를 생성하고, 권한을 요청하는 방법에 대해 알아봅니다.
+        Room Tracking을 위해서는 사용자의 권한 허용이 필요합니다. `ImmersiveSpace`를 생성하고, 권한을 요청하는 방법에 대해 알아봅니다.
         
         @Image(source: "Chapter-01.png", alt: "프로젝트 세팅")
         
