@@ -188,6 +188,19 @@ jobs:
             color: #111 !important;
           }
 
+          /* Ensure section titles (e.g., 필요한 사전지식, 준비물) are readable in Light mode */
+          body[data-color-scheme="light"] .tutorials-overview .hero .content h1,
+          body[data-color-scheme="light"] .tutorials-overview .hero .content h2,
+          body[data-color-scheme="light"] .tutorials-overview .hero .content h3,
+          body[data-color-scheme="light"] .tutorials-overview .hero .content h4,
+          body[data-color-scheme="light"] .tutorials-overview .hero .content h5,
+          body[data-color-scheme="light"] .tutorials-overview .hero .content h6,
+          body[data-color-scheme="light"] .tutorials-overview .hero .content .title,
+          body[data-color-scheme="light"] .tutorials-overview .hero .content .section-title,
+          body[data-color-scheme="light"] .tutorials-overview .hero .content .eyebrow {
+            color: #000 !important;
+          }
+
           /* Keep preparation lists readable inside the centered tutorial hero. */
           .tutorials-overview .hero .content ul,
           .tutorials-overview .hero .content ul p {
@@ -250,6 +263,19 @@ jobs:
             body[data-color-scheme="auto"] .tutorials-overview .hero .content,
             body[data-color-scheme="auto"] .tutorials-overview .hero .meta {
               color: #111 !important;
+            }
+
+            /* Ensure section titles are readable when system prefers light and site is Auto */
+            body[data-color-scheme="auto"] .tutorials-overview .hero .content h1,
+            body[data-color-scheme="auto"] .tutorials-overview .hero .content h2,
+            body[data-color-scheme="auto"] .tutorials-overview .hero .content h3,
+            body[data-color-scheme="auto"] .tutorials-overview .hero .content h4,
+            body[data-color-scheme="auto"] .tutorials-overview .hero .content h5,
+            body[data-color-scheme="auto"] .tutorials-overview .hero .content h6,
+            body[data-color-scheme="auto"] .tutorials-overview .hero .content .title,
+            body[data-color-scheme="auto"] .tutorials-overview .hero .content .section-title,
+            body[data-color-scheme="auto"] .tutorials-overview .hero .content .eyebrow {
+              color: #000 !important;
             }
 
             body[data-color-scheme="auto"]:has(.tutorials-overview) .nav.theme-dark {
@@ -380,3 +406,4 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+
