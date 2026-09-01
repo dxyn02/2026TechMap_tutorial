@@ -1,6 +1,15 @@
 @Tutorials(name: "Cookie Dungeon") {
-    @Intro(title: "visionOS Room Tracking으로 방마다 다른 쿠키 놓기") {
-        내가 서 있는 방을 앱이 알아보게 만듭니다. ARKit의 `RoomTrackingProvider`로 방의 형태를 실시간으로 읽어 쿠키를 배치하고, 벽 너머의 쿠키를 자연스럽게 가리고, 방을 옮길 때마다 다른 쿠키가 나타납니다.
+    @Intro(title: "visionOS Room Tracking으로 방마다 다른 쿠키 배치하기") {
+        본 튜토리얼에서는 ARKit의 `RoomTrackingProvider`를 사용해 사용자가 현재 위치한 방을 인식하고, 방의 구조를 기준으로 쿠키를 배치하는 방법을 다룹니다. 다음에는 벽 뒤에 있는 쿠키가 보이지 않도록 처리하고, 사용자가 다른 방으로 이동했을 때 해당 방에 새로운 쿠키를 표시하는 방법을 알아봅니다.
+        
+        visionOS 앱이 현실 공간을 인식하려면 ARKit이 필요합니다. 튜토리얼 시작 전 ARKit이 어떤 조건에서, 어떤 형태로 데이터를 전달하는지 살펴봅시다.
+        
+        ## 필요한 사전지식
+        
+        - **Full Space vs. Shared Space**: Full Space란 하나의 앱만이 실행되는 환경이고, Shared Space는 여러 앱의 윈도우 등이 동시에 떠 있을 수 있는 공간입니다. ARKit은 앱이 Full Space를 표시할 때에만 데이터를 전달해줍니다.
+        - **ARKit의 구성요소 3가지**: `Anchor`는 현실 세계의 위치와 방향을 나타내고, `DataProvider`는 개별 ARKit 기능을 나타냅니다. 세션을 실행하려면 `DataProvider` 집합(set)을 `ARKitSession`에 제공해야 합니다.
+
+        @Image(source: "ARKit.png", alt: "ARKit 구성요소")
         
         ## 준비물
         
