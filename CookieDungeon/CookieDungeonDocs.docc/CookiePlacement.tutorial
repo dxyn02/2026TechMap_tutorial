@@ -7,9 +7,9 @@
         
         @Steps {
             @Step {
-                `CookieModel` enum을 만듭니다.
+                Xcode에서 **File → New → File**을 열어 Swift 파일을 만들고 이름을 `CookieModel.swift`로 지정합니다. 파일을 만들 때 `CookieDungeon` 앱 타깃을 선택하고, 생성 후에도 File Inspector의 **Target Membership**에 `CookieDungeon`이 체크되어 있는지 확인합니다. 아래 코드를 새 파일에 입력합니다.
                 
-                `CaseIterable`을 채택하면 `allCases`로 전체 목록을 배열처럼 순회할 수 있어, 나중에 쿠키를 추가할 때 이 파일만 고치면 됩니다.
+                `CaseIterable`을 채택하면 `allCases`로 전체 목록을 배열처럼 순회할 수 있어, 나중에 쿠키를 추가할 때 이 파일만 고치면 됩니다. 이 파일이 앱 타깃에 포함되지 않으면 뒤에서 `AppState.swift`의 `CookieModel.allCases` 참조에 `Cannot find 'CookieModel' in scope` 오류가 발생합니다.
                 
                 @Code(name: "CookieModel.swift", file: CookieModel-01-Enum.swift)
             }
